@@ -1,0 +1,327 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "unique": {
+      "type": "string",
+      "metadata": {
+        "description": "Small unique string."
+      }
+    },
+    "vnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Address Prefix CIDR"
+      },
+      "defaultValue": "10.1.0.0/24"
+    },
+    "subnet1Prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet 1 Address Prefix CIDR"
+      },
+      "defaultValue": "10.1.0.0/25"
+    },
+    "subnet2Prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet 2 Address Prefix CIDR"
+      },
+      "defaultValue": "10.1.0.128/26"
+    },
+    "subnet3Prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet 3 Prefix CIDR"
+      },
+      "defaultValue": "10.1.0.192/28"
+    },
+    "subnet4Prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet 4 CIDR"
+      },
+      "defaultValue": "10.1.0.208/28"
+    },
+    "remoteAccessACL": {
+      "type": "string",
+      "metadata": {
+        "description": "Remote Access CIDR"
+      },
+      "defaultValue": "Internet"
+    }
+  },
+  "variables": {
+    "VNetName": "[concat(parameters('unique'), '-vnet')]",
+    "VNetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('VNetName'))]",
+    "Subnet1Name": "front",
+    "SubNet1Id": "[concat(variables('VNetId'), '/subnets/', variables('Subnet1Name'))]",
+    "Subnet2Name": "back",
+    "SubNet2Id": "[concat(variables('VNetId'), '/subnets/', variables('Subnet2Name'))]",
+    "Subnet3Name": "dmz",
+    "SubNet3Id": "[concat(variables('VNetId'), '/subnets/', variables('Subnet3Name'))]",
+    "Subnet4Name": "manage",
+    "SubNet4Id": "[concat(variables('VNetId'), '/subnets/', variables('Subnet4Name'))]",
+    "Nsg1Name": "[concat(variables('Subnet1Name'), '-nsg')]",
+    "Nsg2Name": "[concat(variables('Subnet2Name'), '-nsg')]",
+    "Nsg3Name": "[concat(variables('Subnet3Name'), '-nsg')]",
+    "Nsg4Name": "[concat(variables('Subnet4Name'), '-nsg')]",
+    "Nsg5Name": "remoteAccess-nsg",
+    "Nsg5Id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('Nsg5Name'))]"
+  },
+  "resources": [
+    {
+      "comments": "## Network Security Group ##",
+      "name": "[variables('nsg1Name')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "Network Security Group - Front"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "mysql_rule",
+            "properties": {
+              "description": "Allow SQL",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3306",
+              "sourceAddressPrefix": "[parameters('remoteAccessACL')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "## Network Security Group ##",
+      "name": "[variables('nsg2Name')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "Network Security Group - Back"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "web_rule",
+            "properties": {
+              "description": "Allow Web",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "## Network Security Group ##",
+      "name": "[variables('nsg3Name')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "Network Security Group - dmz"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "web_rule",
+            "properties": {
+              "description": "Allow Web",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "## Network Security Group ##",
+      "name": "[variables('nsg4Name')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "Network Security Group - Manage"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh_rule",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "rdp_rule",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "## Network Security Group ##",
+      "name": "[variables('nsg5Name')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "Network Security Group - Remote Access"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "[parameters('remoteAccessACL')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "[parameters('remoteAccessACL')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1010,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "## Virtual Network ##",
+      "name": "[variables('VNetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg1Name'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg2Name'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg3Name'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg4Name'))]"
+      ],
+      "tags": {
+        "displayName": "Virtual Network"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('VNetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('Subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('Subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg1Name'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('Subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('Subnet2Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg2Name'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('Subnet3Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('Subnet3Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg3Name'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('Subnet4Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('Subnet4Prefix')]"
+            },
+            "networkSecurityGroup": {
+              "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsg4Name'))]"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "virtualNetwork": {
+      "type": "object",
+      "value": {
+        "id": "[variables('VNetId')]",
+        "name": "[variables('VNetName')]"
+      }
+    },
+    "subnets": {
+      "type": "object",
+      "value": {
+        "subnet1Id": "[variables('subnet1Id')]",
+        "subnet2Id": "[variables('subnet2Id')]",
+        "subnet3Id": "[variables('subnet3Id')]",
+        "subnet4Id": "[variables('subnet4Id')]"
+      }
+    },
+    "securityGroups": {
+      "type": "object",
+      "value": {
+        "remoteAccessId": "[variables('Nsg5Id')]"
+      }
+    }
+  }
+}

@@ -1,0 +1,469 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Small unique string."
+      }
+    },
+    "vnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Address Prefix CIDR"
+      },
+      "defaultValue": "10.0.0.0/16"
+    },
+    "subnet1Prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet 1 Address Prefix CIDR"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "subnet2Prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet 2 Address Prefix CIDR"
+      },
+      "defaultValue": "10.0.1.0/24"
+    },
+    "subnet3Prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet 3 Prefix CIDR"
+      },
+      "defaultValue": "10.0.2.0/24"
+    },
+    "storageAccountType": {
+      "type": "string",
+      "metadata": {
+        "description": "Account type, premium vs standard, and local, global redundancy"
+      },
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
+      ]
+    },
+    "vmDC-Name": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "DCvm"
+    },
+    "vmDC-Size": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_A1",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2"
+      ],
+      "metadata": {
+        "description": "Size of the DC virtual machines"
+      }
+    },
+    "vmSQL-Name": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "SQLvm"
+    },
+    "vmSQL-Instances": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of VMs to deploy, limit 5."
+      },
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 5
+    },
+    "vmSQL-Size": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "Standard_DS2_v2",
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2"
+      ],
+      "metadata": {
+        "description": "Size of the SQL virtual machines"
+      }
+    },
+    "vmSQL-SKU": {
+      "type": "string",
+      "defaultValue": "SQLDEV",
+      "allowedValues": [
+        "SQLDEV"
+      ],
+      "metadata": {
+        "description": "The SQL SKU for the VM"
+      }
+    },
+    "vmDC-SKU": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2012-R2-Datacenter",
+        "2016-Datacenter"
+      ],
+      "metadata": {
+        "description": "The DC SKU for the VM"
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin user account name."
+      },
+      "defaultValue": "azureuser",
+      "minLength": 1
+    },
+    "adminPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin user account password."
+      },
+      "defaultValue": "Password1!"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    }
+  },
+  "variables": {
+    "cleanUnique": "[toLower(replace(parameters('prefix'),'-', ''))]",
+    "VNetName": "[concat(parameters('prefix'), '-vnet')]",
+    "VNetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('VNetName'))]",
+    "Subnet1Name": "apps",
+    "SubNet1Id": "[concat(variables('VNetId'), '/subnets/', variables('Subnet1Name'))]",
+    "Subnet2Name": "data",
+    "SubNet2Id": "[concat(variables('VNetId'), '/subnets/', variables('Subnet2Name'))]",
+    "Subnet3Name": "identity",
+    "SubNet3Id": "[concat(variables('VNetId'), '/subnets/', variables('Subnet3Name'))]",
+    "storageAccountName": "[concat(variables('cleanUnique'), uniqueString(resourceGroup().id))]",
+    "storageId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+    "AvailabilitySetName": "[concat(variables('Subnet2Name'), '-as')]",
+    "AvailabilitySetId": "[resourceId('Microsoft.Compute/availabilitySets', variables('AvailabilitySetName'))]",
+    "DCImagePublisher": "MicrosoftWindowsServer",
+    "DCImageOffer": "WindowsServer",
+    "DCStorageAccountContainerName": "vhds",
+    "SQLImagePublisher": "MicrosoftSqlServer",
+    "SQLImageOffer": "SQL2016-WS2016",
+    "SQLStorageAccountContainerName": "vhds",
+    "DeployADScriptFolder": "DeploySQLInfra/CustomScripts",
+    "DeployADScriptFileName": "DeployAD.ps1"
+  },
+  "resources": [
+    {
+      "comments": "## Virtual Network ##",
+      "name": "[variables('VNetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "Virtual Network"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('VNetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('Subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('Subnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('Subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('Subnet2Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('Subnet3Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('Subnet3Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "## Storage Account ##",
+      "name": "[variables('storageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "Storage Account"
+      },
+      "kind": "Storage",
+      "sku": {
+        "name": "[parameters('storageAccountType')]",
+        "tier": "Standard"
+      },
+      "properties": {
+        "encryption": {
+          "keySource": "Microsoft.Storage",
+          "services": {
+            "blob": {
+              "enabled": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "comments": "## Availability Set ##",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('AvailabilitySetName')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "platformUpdateDomainCount": 5,
+        "platformFaultDomainCount": 2,
+        "managed": false
+      }
+    },
+    {
+      "comments": "## Domain Controller Public IP Address ##",
+      "name": "[concat(parameters('vmDC-Name'), '-ip')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "PIPDC"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower(concat(parameters('vmDC-Name'), uniqueString(resourceGroup().id)))]"
+        }
+      }
+    },
+    {
+      "comments": "## DC Network Interface ##",
+      "name": "[concat(parameters('vmDC-Name'), '-nic')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[variables('VNetId')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmDC-Name'), '-ip'))]"
+      ],
+      "tags": {
+        "displayName": "DCNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.2.4",
+              "subnet": {
+                "id": "[variables('SubNet3Id')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmDC-Name'), '-ip'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "## DC Virtual Machine ##",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('vmDC-Name'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('storageId')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmDC-Size')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmDC-Name'))]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('DCImagePublisher')]",
+            "offer": "[variables('DCImageOffer')]",
+            "sku": "[parameters('vmDC-SKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "DCVM-OSDisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('StorageAccountName'), '.blob.core.windows.net/', variables('DCStorageAccountContainerName'), '/', parameters('vmDC-Name'), 'OSDisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmDC-Name'), '-nic'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "DeployAD",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[variables('VNetId')]",
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmDC-Name'))]"
+          ],
+          "tags": {
+            "displayName": "DeployAD"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('DeployADScriptFolder'), '/', variables('DeployADScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('DeployADScriptFolder'), '/', variables('DeployADScriptFileName'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "comments": "## SQL Server Public IP Address ##",
+      "name": "[concat(parameters('vmSQL-Name'), copyindex(), '-ip')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "tags": {},
+      "copy": {
+        "name": "ipLoop",
+        "count": "[parameters('vmSQL-Instances')]"
+      },
+      "dependsOn": [],
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower(concat(parameters('vmSQL-Name'), uniqueString(resourceGroup().id)))]"
+        }
+      }
+    },
+    {
+      "comments": "## SQL Network Interface ##",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('vmSQL-Name'), copyindex(), '-nic')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('vmSQL-Instances')]"
+      },
+      "dependsOn": [
+        "[variables('vnetId')]",
+        "ipLoop"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnet2Id')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmSQL-Name'), copyindex(), '-ip'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "## Virtual Machine ##",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('vmSQL-Name'), copyIndex())]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[parameters('vmSQL-Instances')]"
+      },
+      "dependsOn": [
+        "[variables('storageId')]",
+        "[variables('availabilitySetId')]",
+        "nicLoop"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSQL-Size')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmSQL-Name'), copyIndex())]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('SQLImagePublisher')]",
+            "offer": "[variables('SQLImageOffer')]",
+            "sku": "[parameters('vmSQL-SKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "SQLVM-1OSDisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('StorageAccountName'), '.blob.core.windows.net/', variables('SQLStorageAccountContainerName'), '/', parameters('vmSQL-Name'), copyIndex(), 'OSDisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmSQL-Name'), copyindex(), '-nic'))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

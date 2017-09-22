@@ -1,0 +1,430 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet ID to associate VM to."
+      }
+    },
+    "loadbalancerId": {
+      "type": "string",
+      "metadata": {
+        "description": "Load Balancer Id to associate VM to."
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
+      },
+      "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 5
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Machine 1 Server Name."
+      },
+      "defaultValue": "vm-back",
+      "minLength": 1
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The virtual machine server size."
+      },
+      "defaultValue": "Standard_DS1_v2"
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin user account name."
+      },
+      "defaultValue": "azureuser",
+      "minLength": 1
+    },
+    "adminPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin user account password."
+      }
+    },
+    "WindowsOSVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "The Windows version for the VM."
+      },
+      "defaultValue": "2016-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "2016-Nano-Server",
+        "2016-Datacenter-with-Containers",
+        "2016-Datacenter"
+      ]
+    },
+    "storageName": {
+      "type": "string",
+      "metadata": {
+        "description": "Diagnostics Storage Account Name"
+      }
+    },
+    "storageKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Diagnostics Storage Account Key"
+      }
+    },
+    "omsId": {
+      "type": "string",
+      "metadata": {
+        "description": "OMS Workspace ID"
+      }
+    },
+    "omsKey": {
+      "type": "string",
+      "metadata": {
+        "description": "OMS Workspace Key"
+      }
+    },
+    "modulesUrl": {
+      "type": "string",
+      "defaultValue": "https://github.com/danielscholl/azure-automation-arm/raw/master/dsc/UpdateLCMforAAPull.zip",
+      "metadata": {
+        "description": "URL for the DSC configuration package. NOTE: Can be a Github url(raw) to the zip file (this is the default value)"
+      }
+    },
+    "registrationKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Registration key to use to onboard to the Azure Automation DSC pull/reporting server"
+      }
+    },
+    "registrationUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Registration url of the Azure Automation DSC pull/reporting server"
+      }
+    },
+    "nodeConfigurationName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the node configuration, on the Azure Automation DSC pull server, that this node will be configured as"
+      }
+    },
+    "configurationFunction": {
+      "type": "string",
+      "defaultValue": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+      "metadata": {
+        "description": "DSC configuration function to call. Should contain filename and function in format fileName.ps1\\configurationfunction"
+      }
+    }
+  },
+  "variables": {
+    "AvailabilitySetName": "[concat(parameters('vmName'), '-as')]",
+    "wadlogs": "<WadCfg> <DiagnosticMonitorConfiguration overallQuotaInMB=\"4096\" xmlns=\"http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration\"> <DiagnosticInfrastructureLogs scheduledTransferLogLevelFilter=\"Error\"/> <WindowsEventLog scheduledTransferPeriod=\"PT1M\" > <DataSource name=\"Application!*[System[(Level = 1 or Level = 2)]]\" /> <DataSource name=\"Security!*[System[(Level = 1 or Level = 2)]]\" /> <DataSource name=\"System!*[System[(Level = 1 or Level = 2)]]\" /></WindowsEventLog>",
+    "wadperfcounters1": "<PerformanceCounters scheduledTransferPeriod=\"PT1M\"><PerformanceCounterConfiguration counterSpecifier=\"\\Processor(_Total)\\% Processor Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU utilization\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor(_Total)\\% Privileged Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU privileged time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor(_Total)\\% User Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU user time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor Information(_Total)\\Processor Frequency\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"CPU frequency\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\System\\Processes\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Processes\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Process(_Total)\\Thread Count\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Threads\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Process(_Total)\\Handle Count\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Handles\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\% Committed Bytes In Use\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Memory usage\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\Available Bytes\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory available\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\Committed Bytes\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory committed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\Commit Limit\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory commit limit\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\% Disk Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk active time\" locale=\"en-us\"/></PerformanceCounterConfiguration>",
+    "wadperfcounters2": "<PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\% Disk Read Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk active read time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\% Disk Write Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk active write time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Transfers/sec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk operations\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Reads/sec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk read operations\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Writes/sec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk write operations\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Bytes/sec\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk speed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Read Bytes/sec\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk read speed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Write Bytes/sec\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk write speed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\LogicalDisk(_Total)\\% Free Space\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk free space (percentage)\" locale=\"en-us\"/></PerformanceCounterConfiguration></PerformanceCounters>",
+    "wadcfgxstart": "[concat(variables('wadlogs'), variables('wadperfcounters1'), variables('wadperfcounters2'), '<Metrics resourceId=\"')]",
+    "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name , '/providers/', 'Microsoft.Compute/virtualMachines/')]",
+    "wadcfgxend": "\"><MetricAggregation scheduledTransferPeriod=\"PT1H\"/><MetricAggregation scheduledTransferPeriod=\"PT1M\"/></Metrics></DiagnosticMonitorConfiguration></WadCfg>"
+  },
+  "resources": [
+    {
+      "comments": "## Availability Set ##",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('AvailabilitySetName')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "platformUpdateDomainCount": 5,
+        "platformFaultDomainCount": 2,
+        "managed": true
+      }
+    },
+    {
+      "comments": "## Network Interface ##",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('vmName'), copyindex(), '-nic')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(parameters('loadbalancerId'), '/backendAddressPools/lbBackEnd')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "comments": "## Virtual Machine ##",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('vmName'), copyIndex())]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('AvailabilitySetName'))]",
+        "nicLoop"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmName'), copyIndex())]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftSqlServer",
+            "offer": "SQL2016-WS2016",
+            "sku": "SQLDEV",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(parameters('vmName'), copyIndex(), '-d1')]",
+              "diskSizeGB": 250,
+              "lun": 0,
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              }
+            },
+            {
+              "name": "[concat(parameters('vmName'), copyIndex(), '-d2')]",
+              "diskSizeGB": 250,
+              "lun": 1,
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "Premium_LRS"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'), copyindex(), '-nic'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('http://', parameters('storageName'), '.blob.core.windows.net')]"
+          }
+        }
+      },
+      "resources": []
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), copyIndex(), '/BGInfo')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "extBGloop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "virtualMachineLoop"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "BGInfo",
+        "typeHandlerVersion": "2.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {},
+        "protectedSettings": null
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), copyIndex(), '/OMSExtension')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "extOMSloop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "virtualMachineLoop"
+      ],
+      "tags": {
+        "displayName": "OMSExtension"
+      },
+      "properties": {
+        "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+        "type": "MicrosoftMonitoringAgent",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "workspaceId": "[parameters('omsId')]"
+        },
+        "protectedSettings": {
+          "workspaceKey": "[parameters('omsKey')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), copyIndex(), '/DiagExtension')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "extDiagloop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "virtualMachineLoop"
+      ],
+      "tags": {
+        "displayName": "AzureDiagnostics"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Diagnostics",
+        "type": "IaaSDiagnostics",
+        "typeHandlerVersion": "1.5",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "xmlCfg": "[base64(concat(variables('wadcfgxstart'), variables('wadmetricsresourceid'), parameters('vmName'), variables('wadcfgxend')))]",
+          "storageAccount": "[parameters('storageName')]"
+        },
+        "protectedSettings": {
+          "storageAccountName": "[parameters('storageName')]",
+          "storageAccountKey": "[parameters('storageKey')]",
+          "storageAccountEndPoint": "https://core.windows.net"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), copyIndex(), '/DSCExtension')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "extDscloop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "virtualMachineLoop"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.9",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "1.0.0.0",
+        "protectedSettings": {
+          "Items": {
+            "registrationKeyPrivate": "[parameters('registrationKey')]"
+          }
+        },
+        "settings": {
+          "ModulesUrl": "[parameters('modulesUrl')]",
+          "SasToken": "",
+          "ConfigurationFunction": "[parameters('configurationFunction')]",
+          "Properties": [
+            {
+              "Name": "RegistrationKey",
+              "Value": {
+                "UserName": "PLACEHOLDER_DONOTUSE",
+                "Password": "PrivateSettingsRef:registrationKeyPrivate"
+              },
+              "TypeName": "System.Management.Automation.PSCredential"
+            },
+            {
+              "Name": "RegistrationUrl",
+              "Value": "[parameters('registrationUrl')]",
+              "TypeName": "System.String"
+            },
+            {
+              "Name": "NodeConfigurationName",
+              "Value": "[parameters('nodeConfigurationName')]",
+              "TypeName": "System.String"
+            },
+            {
+              "Name": "ConfigurationMode",
+              "Value": "ApplyAndMonitor",
+              "TypeName": "System.String"
+            },
+            {
+              "Name": "ConfigurationModeFrequencyMins",
+              "Value": "15",
+              "TypeName": "System.Int32"
+            },
+            {
+              "Name": "RefreshFrequencyMins",
+              "Value": "30",
+              "TypeName": "System.Int32"
+            },
+            {
+              "Name": "RebootNodeIfNeeded",
+              "Value": true,
+              "TypeName": "System.Boolean"
+            },
+            {
+              "Name": "ActionAfterReboot",
+              "Value": "ContinueConfiguration",
+              "TypeName": "System.String"
+            },
+            {
+              "Name": "AllowModuleOverwrite",
+              "Value": false,
+              "TypeName": "System.Boolean"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "availabilitySet": {
+      "type": "object",
+      "value": {
+        "name": "[variables('AvailabilitySetName')]"
+      }
+    },
+    "virtualMachine": {
+      "type": "object",
+      "value": {
+        "instanceCount": "[parameters('numberOfInstances')]"
+      }
+    }
+  }
+}

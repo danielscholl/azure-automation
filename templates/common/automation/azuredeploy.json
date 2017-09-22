@@ -1,0 +1,215 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Small unique string."
+      },
+      "defaultValue": "my",
+      "minLength": 2,
+      "maxLength": 5
+    },
+    "omsWorkspaceRegion": {
+      "type": "string",
+      "metadata": {
+        "description": "Specify the region for your Workspace"
+      },
+      "defaultValue": "East US",
+      "allowedValues": [
+        "East US",
+        "West Europe",
+        "Southeast Asia",
+        "Australia Southeast"
+      ]
+    },
+    "automationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Assign a name for the Automation account"
+      },
+      "defaultValue": "automate"
+    },
+    "automationRegion": {
+      "type": "string",
+      "defaultValue": "South Central US",
+      "allowedValues": [
+        "Japan East",
+        "East US 2",
+        "East US",
+        "West Europe",
+        "Southeast Asia",
+        "South Central US",
+        "North Europe",
+        "Canada Central",
+        "Australia Southeast",
+        "Central India",
+        "Japan East"
+      ],
+      "metadata": {
+        "description": "Specify the region for your Automation account"
+      }
+    },
+    "adminUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter your service admin user, ex: serviceaccount@microsoft.com.  Must be owner on the subscription you're deploying to during template deployment."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Enter your service admin password."
+      }
+    },
+    "_functionRepoURL": {
+      "type": "string",
+      "defaultValue": "https://github.com/danielscholl/azure-functions.git",
+      "metadata": {
+        "description": "The URL for the GitHub function repository to deploy."
+      }
+    },
+    "_templateRepoURL": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/danielscholl/azure-automation/master/templates/nested/",
+      "metadata": {
+        "description": "The URL for the GitHub repository that contains nested arm templates."
+      }
+    },
+    "_assetLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/danielscholl/azure-automation/master/runbooks/",
+      "metadata": {
+        "description": "The URL for the GitHub repository that contains runbooks."
+      }
+    }
+  },
+  "variables": {
+    "cleanResourceGroup": "[toLower(replace(resourceGroup().name,'-', ''))]",
+    "omsWorkspaceName": "[concat(variables('cleanResourceGroup'), '-oms')]",
+    "omsWorkspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('omsWorkspaceName'))]"
+  },
+  "resources": [
+    {
+      "name": "TemplateStorage",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_templateRepoURL'), 'deployStorageAccount.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "unique": {
+            "value": "[parameters('prefix')]"
+          },
+          "storageAccountType": {
+            "value": "Standard_LRS"
+          }
+        }
+      }
+    },
+    {
+      "name": "TemplateFunctionApp",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "TemplateStorage"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_templateRepoURL'), 'deployFunctionApp.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "prefix": {
+            "value": "[parameters('prefix')]"
+          },
+          "storageName": {
+            "value": "[reference('TemplateStorage').outputs.storageAccount.value.name]"
+          },
+          "storageId": {
+            "value": "[reference('TemplateStorage').outputs.storageAccount.value.id]"
+          },
+          "repoURL": {
+            "value": "[parameters('_functionRepoURL')]"
+          },
+          "branch": {
+            "value": "master"
+          }
+        }
+      }
+    },
+    {
+      "name": "MyGuids",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "TemplateFunctionApp"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(reference('TemplateFunctionApp').outputs.functionApp.value.url, '?count=5')]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "name": "TemplateAutomation",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "MyGuids"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_templateRepoURL'), 'deployAutomation.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsWorkspaceRegion": {
+            "value": "[parameters('omsWorkspaceRegion')]"
+          },
+          "automationAccountName": {
+            "value": "[parameters('automationAccountName')]"
+          },
+          "automationRegion": {
+            "value": "[parameters('automationRegion')]"
+          },
+          "_assetLocation": {
+            "value": "[parameters('_assetLocation')]"
+          },
+          "adminUser": {
+            "value": "[parameters('adminUser')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "jobGuid1": {
+            "value": "[reference('MyGuids').outputs.guid1.value]"
+          },
+          "jobGuid2": {
+            "value": "[reference('MyGuids').outputs.guid2.value]"
+          },
+          "jobGuid3": {
+            "value": "[reference('MyGuids').outputs.guid3.value]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "omsWorkspace": {
+      "type": "object",
+      "value": {
+        "id": "[variables('omsWorkspaceId')]",
+        "name": "[variables('omsWorkspaceName')]"
+      }
+    }
+  }
+}
