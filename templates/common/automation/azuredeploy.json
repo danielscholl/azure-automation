@@ -24,13 +24,6 @@
         "Australia Southeast"
       ]
     },
-    "automationAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Assign a name for the Automation account"
-      },
-      "defaultValue": "automate"
-    },
     "automationRegion": {
       "type": "string",
       "defaultValue": "South Central US",
@@ -174,9 +167,6 @@
         "parameters": {
           "omsWorkspaceRegion": {
             "value": "[parameters('omsWorkspaceRegion')]"
-          },
-          "automationAccountName": {
-            "value": "[parameters('automationAccountName')]"
           },
           "automationRegion": {
             "value": "[parameters('automationRegion')]"
