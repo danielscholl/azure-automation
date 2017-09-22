@@ -158,6 +158,14 @@
       "xActiveDirectory": {
         "name": "xActiveDirectory",
         "url": "https://www.powershellgallery.com/api/v2/package/xActiveDirectory/2.16.0.0"
+      },
+      "xStorage": {
+        "name": "xStorage",
+        "url": "https://www.powershellgallery.com/api/v2/package/xStorage/3.2.0"
+      },
+      "xDSCDomainjoin": {
+        "name": "xDSCDomainjoin",
+        "url": "https://www.powershellgallery.com/api/v2/package/xDSCDomainjoin/1.1.0"
       }
     },
     "runbooks": {
