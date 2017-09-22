@@ -679,6 +679,48 @@
           }
         },
         {
+          "name": "[variables('psModules').xActiveDirectory.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": {},
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureRmKeyVault.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').xStorage.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": {},
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureRmKeyVault.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').xDSCDomainjoin.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": {},
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureRmKeyVault.url]"
+            }
+          }
+        },
+        {
           "name": "[variables('runbooks').stopmachines.name]",
           "type": "runbooks",
           "apiVersion": "2015-10-31",
