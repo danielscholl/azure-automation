@@ -231,11 +231,11 @@ try {
       Remove-AzureRmAutomationCredential -Name "AzureCredentials" -automationAccountName $automationAccountName -ResourceGroupName $ResourceGroupName
     }
 
-    $checkScheduleBootstrap = Get-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name "startBootstrap" -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    $checkScheduleBootstrap = Get-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name "bootstrapSchedule" -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
 
     if ($checkScheduleBootstrap -ne $null) {
       Write-Output "Removing Bootstrap Schedule..."
-      Remove-AzureRmAutomationSchedule -Name "startBootstrap" -automationAccountName $automationAccountName -ResourceGroupName $ResourceGroupName -Force
+      Remove-AzureRmAutomationSchedule -Name "bootstrapSchedule" -automationAccountName $automationAccountName -ResourceGroupName $ResourceGroupName -Force
     }
   }
   catch {
