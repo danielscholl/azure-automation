@@ -157,7 +157,7 @@
       },
       "xActiveDirectory": {
         "name": "xActiveDirectory",
-        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/xActiveDirectory.2.16.0.nupkg"
+        "url": "https://www.powershellgallery.com/api/v2/package/xActiveDirectory/2.16.0.0"
       }
     },
     "runbooks": {
