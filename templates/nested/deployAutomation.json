@@ -155,9 +155,13 @@
         "name": "AzureRm.KeyVault",
         "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.keyvault.3.3.1.nupkg"
       },
-      "xActiveDirectory": {
-        "name": "xActiveDirectory",
-        "url": "https://www.powershellgallery.com/api/v2/package/xActiveDirectory/2.16.0.0"
+      "xComputerManagement": {
+        "name": "xComputerManagement",
+        "url": "https://www.powershellgallery.com/api/v2/packages/xComputerManagement/2.1.0"
+      },
+      "xNetworking": {
+        "name": "xNetworking",
+        "url": "https://www.powershellgallery.com/api/v2/packages/xNetworking/5.1.0"
       },
       "xStorage": {
         "name": "xStorage",
@@ -166,6 +170,18 @@
       "xDSCDomainjoin": {
         "name": "xDSCDomainjoin",
         "url": "https://www.powershellgallery.com/api/v2/package/xDSCDomainjoin/1.1.0"
+      },
+      "xActiveDirectory": {
+        "name": "xActiveDirectory",
+        "url": "https://www.powershellgallery.com/api/v2/package/xActiveDirectory/2.16.0.0"
+      },
+      "xSQLServer": {
+        "name": "xSQLServer",
+        "url": "https://www.powershellgallery.com/api/v2/packages/xSQLServer/8.1.0"
+      },
+      "xSqlPs": {
+        "name": "xSqlPs",
+        "url": "https://www.powershellgallery.com/api/v2/packages/xSqlPs/1.4.0"
       }
     },
     "runbooks": {
@@ -679,7 +695,7 @@
           }
         },
         {
-          "name": "[variables('psModules').xActiveDirectory.name]",
+          "name": "[variables('psModules').xComputerManagement.name]",
           "type": "Modules",
           "apiVersion": "2015-10-31",
           "tags": {},
@@ -688,7 +704,21 @@
           ],
           "properties": {
             "contentLink": {
-              "uri": "[variables('psModules').xActiveDirectory.url]"
+              "uri": "[variables('psModules').xComputerManagement.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').xNetworking.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": {},
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').xNetworking.url]"
             }
           }
         },
@@ -707,6 +737,20 @@
           }
         },
         {
+          "name": "[variables('psModules').xActiveDirectory.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": {},
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').xActiveDirectory.url]"
+            }
+          }
+        },
+        {
           "name": "[variables('psModules').xDSCDomainjoin.name]",
           "type": "Modules",
           "apiVersion": "2015-10-31",
@@ -717,6 +761,34 @@
           "properties": {
             "contentLink": {
               "uri": "[variables('psModules').xDSCDomainjoin.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').xSQLServer.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": {},
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').xSQLServer.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').xSqlPs.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": {},
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').xSqlPs.url]"
             }
           }
         },
