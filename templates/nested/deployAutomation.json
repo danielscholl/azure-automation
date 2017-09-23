@@ -157,11 +157,11 @@
       },
       "xComputerManagement": {
         "name": "xComputerManagement",
-        "url": "https://www.powershellgallery.com/api/v2/packages/xComputerManagement/2.1.0"
+        "url": "https://www.powershellgallery.com/api/v2/package/xComputerManagement/2.1.0"
       },
       "xNetworking": {
         "name": "xNetworking",
-        "url": "https://www.powershellgallery.com/api/v2/packages/xNetworking/5.1.0"
+        "url": "https://www.powershellgallery.com/api/v2/package/xNetworking/5.1.0"
       },
       "xStorage": {
         "name": "xStorage",
@@ -177,11 +177,11 @@
       },
       "xSQLServer": {
         "name": "xSQLServer",
-        "url": "https://www.powershellgallery.com/api/v2/packages/xSQLServer/8.1.0"
+        "url": "https://www.powershellgallery.com/api/v2/package/xSQLServer/8.1.0"
       },
       "xSqlPs": {
         "name": "xSqlPs",
-        "url": "https://www.powershellgallery.com/api/v2/packages/xSqlPs/1.4.0"
+        "url": "https://www.powershellgallery.com/api/v2/package/xSqlPs/1.4.0"
       }
     },
     "runbooks": {
