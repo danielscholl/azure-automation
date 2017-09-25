@@ -5,47 +5,59 @@
 .DESCRIPTION
    This script will import a module via powershell into a provided automation account.
 .EXAMPLE
-
+    ./importModule.ps1 -ModuleName xWebAdministration -ModuleVersion 1.18.0 -ResourceGroup ccit-automation -AutomationAccount automate 
 #>
 
+#Requires -Version 3.0
+#Requires -Module AzureRM.Resources
 
 Param(
-  [Parameter(Mandatory = $true)]
-  [string] $moduleName,
-  [Parameter(Mandatory = $true)]
-  [string] $moduleVersion,
-  [string] $moduleAutomationAccountName,
-  [string] $moduleResourceGroup,
-  [bool] $Force = $false
+    [Parameter(Mandatory = $true)]
+    [string] $ModuleName,
+
+    [Parameter(Mandatory = $true)]
+    [string] $ModuleVersion,
+
+    [Parameter(Mandatory = $true)]
+    [string] $ResourceGroup,
+
+    [string] $AutomationAccount = $ResourceGroup.Replace("-", "").ToLower() + "-automate",
 )
 
-Function Import-DscModule ($moduleName, $moduleVersion, $moduleAutomationAccountName, $moduleResourceGroup) {
-  $module1 = Get-AzureRmAutomationModule -AutomationAccountName $moduleAutomationAccountName -ResourceGroupName $moduleResourceGroup -Name $moduleName  -erroraction 'silentlycontinue'
-  if (!$module1) {
-    Write-Information -MessageData  "Importing $moduleName module with version $moduleVersion into the Automation Account $moduleAutomationAccountName"
+function Import-DscModule ($name, $version, $account, $group) {
+
+  $module = Get-AzureRmAutomationModule `
+    -Name $name  `
+    -AutomationAccountName $account `
+    -ResourceGroupName $group `
+    -ErrorAction SilentlyContinue
+
+  if (!$module) {
     Set-StrictMode -off
+    Write-Output "Importing $name module with version $version into the Automation Account $account"
+    
 
-    $ModuleContentUrl = "https://www.powershellgallery.com/api/v2/package/$moduleName/$moduleVersion"
+    $url = "https://www.powershellgallery.com/api/v2/package/$name/$version"
 
-    do {
-      $ActualUrl = $ModuleContentUrl
-      $ModuleContentUrl = (Invoke-WebRequest -UseBasicParsing -Uri $ModuleContentUrl -MaximumRedirection 0 -ErrorAction Ignore).Headers.Location
-    } while ($ModuleContentUrl -ne $Null)
 
     New-AzureRmAutomationModule `
-      -ResourceGroupName $moduleResourceGroup `
-      -AutomationAccountName $moduleAutomationAccountName `
-      -Name $moduleName `
-      -ContentLink $ActualUrl
+      -Name $name `
+      -AutomationAccountName $account `
+      -ResourceGroupName $group `
+      -ContentLink $url
 
-    $importDone = ""
-    while (!$importDone) {
-      $importDone = Get-AzureRmAutomationModule -ResourceGroupName $moduleResourceGroup -AutomationAccountName $moduleAutomationAccountName -Name $moduleName -ErrorAction SilentlyContinue| Where-Object {$_.ProvisioningState -eq 'Succeeded'}
+    $done = ""
+    while (!$done) {
+      $done = Get-AzureRmAutomationModule `
+                -Name $name `
+                -AutomationAccountName $account `
+                -ResourceGroupName $group `
+                -ErrorAction SilentlyContinue| Where-Object {$_.ProvisioningState -eq 'Succeeded'}
       Start-Sleep -Seconds 3
-      Write-Information -MessageData "."
+      Write-Output "Importing ..."
     }
-    Write-Information -MessageData  "!"
+    Write-Output "Import Complete!"
   }
 }
 
-Import-DscModule  $moduleName $moduleVersion $moduleAutomationAccountName $moduleResourceGroup
+Import-DscModule  $ModuleName $ModuleVersion $AutomationAccount $ResourceGroup

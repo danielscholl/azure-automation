@@ -44,13 +44,13 @@
         "description": "Specify the region for your Automation account"
       }
     },
-    "adminUser": {
+    "subscriptionAdmin": {
       "type": "string",
       "metadata": {
         "description": "Enter your service admin user, ex: serviceaccount@microsoft.com.  Must be owner on the subscription you're deploying to during template deployment."
       }
     },
-    "adminPassword": {
+    "subscriptionPassword": {
       "type": "securestring",
       "metadata": {
         "description": "Enter your service admin password."
@@ -165,6 +165,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "prefix": {
+            "value": "[parameters('prefix')]"
+          },
           "omsWorkspaceRegion": {
             "value": "[parameters('omsWorkspaceRegion')]"
           },
@@ -175,10 +178,10 @@
             "value": "[parameters('_assetLocation')]"
           },
           "adminUser": {
-            "value": "[parameters('adminUser')]"
+            "value": "[parameters('subscriptionAdmin')]"
           },
           "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+            "value": "[parameters('subscriptionPassword')]"
           },
           "jobGuid1": {
             "value": "[reference('MyGuids').outputs.guid1.value]"

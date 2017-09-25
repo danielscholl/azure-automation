@@ -1,5 +1,6 @@
-Configuration DscConfDomainController {
+Configuration DomainController {
   Import-DscResource -ModuleName xActiveDirectory, xStorage, PSDesiredStateConfiguration, xDSCDomainjoin
+  
   $dscDomainAdmin = Get-AutomationPSCredential -Name 'addcDomainAdmin'
   $dscDomainName = Get-AutomationVariable -Name 'addcDomainName'
   $dscDomainNetbiosName = Get-AutomationVariable -Name 'addcDomainNetbiosName'
@@ -26,13 +27,13 @@ Configuration DscConfDomainController {
 
     xWaitforDisk Disk2
     {
-      DiskNumber = 2
+      DiskId = 2
       RetryIntervalSec = 20
       RetryCount = 30
     }
 
     xDisk ADDataDisk {
-      DiskNumber = 2
+      DiskId = 2
       DriveLetter = "F"
       DependsOn = "[xWaitForDisk]Disk2"
     }
@@ -107,14 +108,14 @@ Configuration DscConfDomainController {
 
     xWaitforDisk Disk2
     {
-      DiskNumber = 2
+      DiskId = 2
       RetryIntervalSec = 20
       RetryCount = 30
       DependsOn = "[WindowsFeature]ADAdminCenter"
     }
 
     xDisk ADDataDisk {
-      DiskNumber = 2
+      DiskId = 2
       DriveLetter = "F"
       DependsOn = "[xWaitForDisk]Disk2"
     }

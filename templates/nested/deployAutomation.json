@@ -2,6 +2,15 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Small unique string."
+      },
+      "defaultValue": "my",
+      "minLength": 2,
+      "maxLength": 5
+    },
     "omsWorkspaceRegion": {
       "type": "string",
       "metadata": {
@@ -42,16 +51,28 @@
         "description": "Path of the template folder."
       }
     },
-    "adminUser": {
+    "subscriptionAdmin": {
       "type": "string",
       "metadata": {
         "description": "Enter your service admin user, ex: serviceaccount@microsoft.com.  Must be owner on the subscription you're deploying to during template deployment."
       }
     },
-    "adminPassword": {
+    "subscriptionPassword": {
       "type": "securestring",
       "metadata": {
         "description": "Enter your service admin password."
+      }
+    },
+    "domainAdmin": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter your domain admin user."
+      }
+    },
+    "domainPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Enter your domain admin password."
       }
     },
     "jobGuid1": {
@@ -481,6 +502,46 @@
           }
         },
         {
+          "name": "adDomainNetbiosName",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "description": "Active Directory Netbios Name",
+            "value": "[parameters('prefix')]"
+          }
+        },
+        {
+          "name": "adDomainName",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "description": "Active Directory Domain Name",
+            "value": "[parameters('prefix')]"
+          }
+        },
+        {
+          "name": "adDomainCredentials",
+          "type": "credentials",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', variables('automationAccountName'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "description": "Active Directory Domain Admin",
+            "userName": "[concat(parameters('prefix'), '\\', parameters('domainAdmin'))]",
+            "password": "[parameters('domainPassword')]"
+          }
+        },
+        {
           "name": "AzureCredentials",
           "type": "credentials",
           "apiVersion": "2015-10-31",
@@ -490,10 +551,11 @@
           "tags": {},
           "properties": {
             "description": "Azure Subscription Credentials",
-            "userName": "[parameters('adminUser')]",
-            "password": "[parameters('adminPassword')]"
+            "userName": "[parameters('subscriptionAdmin')]",
+            "password": "[parameters('subScriptionPassword')]"
           }
         },
+        
         {
           "name": "[variables('psModules').azureRmProfile.name]",
           "type": "Modules",
