@@ -5,7 +5,7 @@
 .DESCRIPTION
    This script will import a module via powershell into a provided automation account.
 .EXAMPLE
-    ./importModule.ps1 -ModuleName xWebAdministration -ModuleVersion 1.18.0 -ResourceGroup ccit-automation -AutomationAccount automate 
+    ./importModule.ps1 -ModuleName xWebAdministration -ModuleVersion 1.18.0 -ResourceGroup ccit-automation -AutomationAccount automate
 #>
 
 #Requires -Version 3.0
@@ -21,7 +21,7 @@ Param(
     [Parameter(Mandatory = $true)]
     [string] $ResourceGroup,
 
-    [string] $AutomationAccount = $ResourceGroup.Replace("-", "").ToLower() + "-automate",
+    [string] $AutomationAccount = $ResourceGroup.Replace("-", "").ToLower() + "-automate"
 )
 
 function Import-DscModule ($name, $version, $account, $group) {
@@ -35,7 +35,7 @@ function Import-DscModule ($name, $version, $account, $group) {
   if (!$module) {
     Set-StrictMode -off
     Write-Output "Importing $name module with version $version into the Automation Account $account"
-    
+
 
     $url = "https://www.powershellgallery.com/api/v2/package/$name/$version"
 

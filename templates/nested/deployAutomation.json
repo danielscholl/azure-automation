@@ -198,7 +198,7 @@
       },
       "xSQLServer": {
         "name": "xSQLServer",
-        "url": "https://www.powershellgallery.com/api/v2/package/xSQLServer/8.1.0"
+        "url": "https://www.powershellgallery.com/api/v2/package/xSQLServer/7.1.0.0"
       },
       "xSqlPs": {
         "name": "xSqlPs",

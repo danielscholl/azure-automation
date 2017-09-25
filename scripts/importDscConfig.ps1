@@ -14,18 +14,22 @@
 Param(
 
     [Parameter(Mandatory = $true)]
-    [string] $dscConfig,
-
-    [string] $dscDataConfig = $dscConfig.Replace(".ps1", "-config.ps1"),
+    [string] $dscRole,
 
     [Parameter(Mandatory = $true)]
     [string] $ResourceGroup,
 
     [string] $AutomationAccount = $ResourceGroup.Replace("-", "").ToLower() + "-automate",
+    [string] $DscPath = "../dsc/",
+    [string] $dscDataConfig = $dscRole + "-config.ps1",
     [bool] $Force = $false
 )
 
-function Import-DscConfiguration ($dscConfig, $dscDataConfig, $AutomationAccount, $ResourceGroup) {
+function Import-DscConfiguration ($script, $config, $AutomationAccount, $ResourceGroup) {
+
+    $dscConfig = Join-Path $DscPath ($script + ".ps1")
+    $dscDataConfig = Join-Path $DscPath $config
+
     $dscConfigFile = (Get-Item $dscConfig).FullName
     $dscConfigFileName = [io.path]::GetFileNameWithoutExtension($dscConfigFile)
 
@@ -72,4 +76,4 @@ function Import-DscConfiguration ($dscConfig, $dscDataConfig, $AutomationAccount
 }
 
 
-Import-DscConfiguration $dscConfig $dscDataConfig $AutomationAccount $ResourceGroup
+Import-DscConfiguration $dscRole $dscDataConfig $AutomationAccount $ResourceGroup

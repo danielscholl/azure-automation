@@ -1,9 +1,9 @@
 Configuration DomainController {
   Import-DscResource -ModuleName xActiveDirectory, xStorage, PSDesiredStateConfiguration, xDSCDomainjoin
   
-  $dscDomainAdmin = Get-AutomationPSCredential -Name 'addcDomainAdmin'
-  $dscDomainName = Get-AutomationVariable -Name 'addcDomainName'
-  $dscDomainNetbiosName = Get-AutomationVariable -Name 'addcDomainNetbiosName'
+  $dscDomainAdmin = Get-AutomationPSCredential -Name 'adDomainCredentials'
+  $dscDomainName = Get-AutomationVariable -Name 'adDomainName'
+  $dscDomainNetbiosName = Get-AutomationVariable -Name 'adDomainNetbiosName'
   $dscSafeModePassword = $dscDomainAdmin
   $DomainRoot = "DC=$($dscDomainAdmin -replace '\.',',DC=')"
   $dscDomainJoinAdminUsername = $dscDomainAdmin.UserName
