@@ -511,7 +511,7 @@
           "tags": {},
           "properties": {
             "description": "Active Directory Netbios Name",
-            "value": "[parameters('prefix')]"
+            "value": "[concat('\"', parameters('prefix'), '\"')]"
           }
         },
         {
@@ -524,7 +524,7 @@
           "tags": {},
           "properties": {
             "description": "Active Directory Domain Name",
-            "value": "[parameters('prefix')]"
+            "value": "[concat('\"', parameters('prefix'), '\"')]"
           }
         },
         {

@@ -56,6 +56,18 @@
         "description": "Enter your service admin password."
       }
     },
+    "domainAdmin": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter your domain admin user."
+      }
+    },
+    "domainPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Enter your domain admin password."
+      }
+    },
     "_functionRepoURL": {
       "type": "string",
       "defaultValue": "https://github.com/danielscholl/azure-functions.git",
@@ -177,11 +189,17 @@
           "_assetLocation": {
             "value": "[parameters('_assetLocation')]"
           },
-          "adminUser": {
+          "subscriptionAdmin": {
             "value": "[parameters('subscriptionAdmin')]"
           },
-          "adminPassword": {
+          "subscriptionPassword": {
             "value": "[parameters('subscriptionPassword')]"
+          },
+          "domainAdmin": {
+            "value": "[parameters('domainAdmin')]"
+          },
+          "domainPassword": {
+            "value": "[parameters('domainPassword')]"
           },
           "jobGuid1": {
             "value": "[reference('MyGuids').outputs.guid1.value]"
