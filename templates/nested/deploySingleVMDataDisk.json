@@ -146,17 +146,17 @@
           "osDisk": {
             "createOption": "FromImage",
             "managedDisk": {
-              "accountType": "[variables('storageAccountType')]"
+              "storageAccountType": "Standard_LRS"
             }
           },
           "dataDisks": [
             {
-              "name": "[concat(parameters('vmName'), parameters('vmSuffix'), '-d1')]",
+              "name": "[concat(parameters('vmName'), copyIndex(), '-d1')]",
               "diskSizeGB": 32,
-              "lun": 2,
+              "lun": 0,
               "createOption": "Empty",
               "managedDisk": {
-                "accountType": "[variables('storageAccountType')]"
+                "storageAccountType": "Standard_LRS"
               }
             }
           ]
