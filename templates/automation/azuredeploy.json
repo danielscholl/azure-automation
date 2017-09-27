@@ -56,6 +56,12 @@
         "description": "Enter your service admin password."
       }
     },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter your domain admin user."
+      }
+    },
     "domainAdmin": {
       "type": "string",
       "metadata": {
@@ -194,6 +200,9 @@
           },
           "subscriptionPassword": {
             "value": "[parameters('subscriptionPassword')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
           },
           "domainAdmin": {
             "value": "[parameters('domainAdmin')]"

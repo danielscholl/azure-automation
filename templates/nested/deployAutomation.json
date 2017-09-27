@@ -63,6 +63,12 @@
         "description": "Enter your service admin password."
       }
     },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter your domain admin user."
+      }
+    },
     "domainAdmin": {
       "type": "string",
       "metadata": {
@@ -524,7 +530,7 @@
           "tags": {},
           "properties": {
             "description": "Active Directory Domain Name",
-            "value": "[concat('\"', parameters('prefix'), '\"')]"
+            "value": "[concat('\"', parameters('domainName'), '\"')]"
           }
         },
         {
@@ -555,7 +561,6 @@
             "password": "[parameters('subScriptionPassword')]"
           }
         },
-        
         {
           "name": "[variables('psModules').azureRmProfile.name]",
           "type": "Modules",

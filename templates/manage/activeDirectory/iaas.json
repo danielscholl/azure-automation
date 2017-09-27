@@ -66,45 +66,11 @@
       "metadata": {
         "description": "Storage Account Name for Diagnostic Logs"
       }
-    },
-    "dscPullServerKey": {
-      "type": "string",
-      "metadata": {
-        "description": "Registration key to use to onboard to the Azure Automation DSC pull/reporting server"
-      }
-    },
-    "dscPullServerUrl": {
-      "type": "string",
-      "metadata": {
-        "description": "Registration url of the Azure Automation DSC pull/reporting server"
-      }
-    },
-    "dscNodeConfiguration": {
-      "type": "string",
-      "metadata": {
-        "description": "DSC Node Configuration"
-      },
-      "allowedValues": [
-        "DomainController"
-      ],
-      "defaultValue": "DomainController"
-    },
-    "domainType": {
-      "type": "string",
-      "metadata": {
-        "description": "Is it the first domain controller (new domain/forest) or will you be adding one?"
-      },
-      "allowedValues": [
-        "FirstDC",
-        "AdditionalDC"
-      ],
-      "defaultValue": "AdditionalDC"
     }
   },
   "variables": {
     "KeyVaultId": "[resourceId(parameters('keyVaultGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVault'))]",
-    "vmFullName": "[concat(parameters('prefix'), '-', parameters('vmName'), parameters('vmSuffix'))]",
-    "DomainController": "[concat(parameters('dscNodeConfiguration'), '.', parameters('domainType'))]"
+    "vmFullName": "[concat(parameters('prefix'), '-', parameters('vmName'), parameters('vmSuffix'))]"
   },
   "resources": [
     {
@@ -157,35 +123,6 @@
               },
               "secretName": "diagStorageKey"
             }
-          }
-        }
-      }
-    },
-    {
-      "name": "templateDSCExtension",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "TemplateADServer"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_templateUrl'), 'deployDSCExtension.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "vmName": {
-            "value": "[variables('vmFullName')]"
-          },
-          "registrationKey": {
-            "value": "[parameters('dscPullServerKey')]"
-          },
-          "registrationUrl": {
-            "value": "[parameters('dscPullServerUrl')]"
-          },
-          "nodeConfigurationName": {
-            "value": "[variables('DomainController')]"
           }
         }
       }

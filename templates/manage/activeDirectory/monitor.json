@@ -20,12 +20,6 @@
         "description": "Name of the existing KeyVault Resource Group"
       }
     },
-    "omsId": {
-      "type": "string",
-      "metadata": {
-        "description": "OMS Workspace ID"
-      }
-    },
     "vmName": {
       "type": "string",
       "metadata": {
@@ -53,7 +47,12 @@
             "value": "[parameters('vmName')]"
           },
           "omsId": {
-            "value": "[parameters('omsId')]"
+            "reference": {
+              "keyVault": {
+                "id": "[variables('KeyVaultId')]"
+              },
+              "secretName": "omsId"
+            }
           },
           "omsKey": {
             "reference": {

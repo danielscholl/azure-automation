@@ -1,0 +1,83 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_templateUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of Nested Templates"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the Domain Controller VM."
+      }
+    },
+    "dscPullServerKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Registration key to use to onboard to the Azure Automation DSC pull/reporting server"
+      }
+    },
+    "dscPullServerUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Registration url of the Azure Automation DSC pull/reporting server"
+      }
+    },
+    "dscNodeConfiguration": {
+      "type": "string",
+      "metadata": {
+        "description": "DSC Node Configuration"
+      },
+      "allowedValues": [
+        "DomainController"
+      ],
+      "defaultValue": "DomainController"
+    },
+    "domainType": {
+      "type": "string",
+      "metadata": {
+        "description": "Is it the first domain controller (new domain/forest) or will you be adding one?"
+      },
+      "allowedValues": [
+        "FirstDC",
+        "AdditionalDC"
+      ],
+      "defaultValue": "AdditionalDC"
+    }
+  },
+  "variables": {
+    "DomainController": "[concat(parameters('dscNodeConfiguration'), '.', parameters('domainType'))]"
+  },
+  "resources": [
+    {
+      "name": "templateDSCExtension",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_templateUrl'), 'deployDSCExtension.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "registrationKey": {
+            "value": "[parameters('dscPullServerKey')]"
+          },
+          "registrationUrl": {
+            "value": "[parameters('dscPullServerUrl')]"
+          },
+          "nodeConfigurationName": {
+            "value": "[variables('DomainController')]"
+          }
+        }
+      }
+    }
+  ]
+}
