@@ -2,172 +2,100 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vnetName": {
+    "prefix": {
       "type": "string",
-      "defaultValue": "VNET001",
       "metadata": {
-        "description": "Enter the name of your VNET"
-      }
+        "description": "Small unique string."
+      },
+      "defaultValue": "my",
+      "minLength": 2,
+      "maxLength": 5
     },
-    "vnetLocation": {
+    "_templateUrl": {
       "type": "string",
-      "defaultValue": "South Central US",
       "metadata": {
-        "description": "Enter the name of your VNET"
+        "description": "Location of Nested Templates"
       }
     },
     "vnetPrefix": {
       "type": "string",
-      "defaultValue": "10.1.",
       "metadata": {
-        "description": "Enter the prefex for your /16 address space. Use the X.X. format, ending with a point."
-      }
+        "description": "Virtual Network Address Prefix (CIDR)"
+      },
+      "defaultValue": "10.1.0.0/24"
     },
-    "virtualNetworkDns01": {
+    "frontPrefix": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
-        "description": "Enter the primary DNS server you want to use for this VNET"
-      }
+        "description": "Subnet 1 Address Prefix (CIDR)"
+      },
+      "defaultValue": "10.1.0.0/25"
     },
-    "virtualNetworkDns02": {
+    "backPrefix": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
-        "description": "Enter the secondary DNS server you want to use for this VNET"
-      }
+        "description": "Subnet 2 Address Prefix (CIDR)"
+      },
+      "defaultValue": "10.1.0.128/26"
     },
-    "subnetCount": {
-      "type": "int",
-      "defaultValue": 3,
-      "minValue": 2,
-      "maxValue": 253,
+    "dmzPrefix": {
+      "type": "string",
       "metadata": {
-        "description": "Enter the amount of subnets you want to provision"
-      }
+        "description": "Subnet 3 Address Prefix (CIDR)"
+      },
+      "defaultValue": "10.1.0.192/28"
     },
-    "subnetMask": {
-      "type": "int",
-      "defaultValue": 24,
-      "minValue": 17,
-      "maxValue": 24,
+    "managePrefix": {
+      "type": "string",
       "metadata": {
-        "description": "Enter the subnet mask bits used for each subnet"
-      }
+        "description": "Subnet 4 Address Prefix (CIDR)"
+      },
+      "defaultValue": "10.1.0.208/28"
+    },
+    "remoteAccessACL": {
+      "type": "string",
+      "metadata": {
+        "description": "Allow Remote Access IP (CIDR)"
+      },
+      "defaultValue": "Internet"
     }
   },
-  "variables": {
-    "virtualNetworkName": "[parameters('vnetName')]",
-    "virtualNetworkPrefix": "[parameters('vnetPrefix')]",
-    "virtualNetworkSubnetPrefix": "SUBNET",
-    "virtualNetworkSubnetOffset": 0,
-    "virtualNetworkSubnetOctet": 0,
-    "virtualNetworkSubnetCount": "[parameters('subnetCount')]",
-    "virtualNetworkSubnetMask": "[parameters('subnetMask')]",
-    "virtualNetworkSubnetNameGateway": "GatewaySubnet",
-    "virtualNetworkSubnetDmzPrefix": "SUBNETDMZ",
-    "virtualNetworkSubnetDmzOffset": 254,
-    "virtualNetworkSubnetDmzOctet": 0,
-    "virtualNetworkSubnetDmzCount": 16,
-    "virtualNetworkSubnetDmzMask": 28,
-    "virtualNetworkSubnetDmzMaskJump": 16
-  },
+  "variables": {},
   "resources": [
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('vnetLocation')]",
-      "tags": {
-        "displayName": "VirtualNetwork"
-      },
+      "name": "TemplateVNet",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[concat(variables('virtualNetworkPrefix'), '0.0/16')]"
-          ]
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_templateUrl'), 'deployVNet.json')]",
+          "contentVersion": "1.0.0.0"
         },
-        "dhcpOptions": {
-          "dnsServers": [
-            "[parameters('virtualNetworkDns01')]",
-            "[parameters('virtualNetworkDns02')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('virtualNetworkSubnetNameGateway')]",
-            "properties": {
-              "addressPrefix": "[concat(variables('virtualNetworkPrefix'), '254.0/',variables('virtualNetworkSubnetDmzMask'))]"
-            }
+        "parameters": {
+          "unique": {
+            "value": "[parameters('prefix')]"
+          },
+          "vnetPrefix": {
+            "value": "[parameters('vnetPrefix')]"
+          },
+          "subnet1Prefix": {
+            "value": "[parameters('frontPrefix')]"
+          },
+          "subnet2Prefix": {
+            "value": "[parameters('backPrefix')]"
+          },
+          "subnet3Prefix": {
+            "value": "[parameters('dmzPrefix')]"
+          },
+          "subnet4Prefix": {
+            "value": "[parameters('managePrefix')]"
+          },
+          "remoteAccessACL": {
+            "value": "[parameters('remoteAccessACL')]"
           }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks/subnets",
-      "name": "[concat(variables('virtualNetworkName'), '/', variables('virtualNetworkSubnetPrefix'), variables('virtualNetworkSubnetOffset'))]",
-      "location": "[parameters('vnetLocation')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
-      "properties": {
-        "addressPrefix": "[concat(variables('virtualNetworkPrefix'), variables('virtualNetworkSubnetOffset'),'.',variables('virtualNetworkSubnetOctet'),'/',variables('virtualNetworkSubnetMask'))]"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks/subnets",
-      "name": "[concat(variables('virtualNetworkName'), '/', variables('virtualNetworkSubnetPrefix'), copyindex(add(variables('virtualNetworkSubnetOffset'),1)))]",
-      "location": "[parameters('vnetLocation')]",
-      "copy": {
-        "name": "subnetLoop",
-        "count": "[add(variables('virtualNetworkSubnetCount'),-1)]"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'),'/subnets/',variables('virtualNetworkSubnetPrefix'), copyindex(variables('virtualNetworkSubnetOffset')))]"
-      ],
-      "properties": {
-        "addressPrefix": "[concat(variables('virtualNetworkPrefix'), copyindex(add(variables('virtualNetworkSubnetOffset'),1)),'.',variables('virtualNetworkSubnetOctet'),'/',variables('virtualNetworkSubnetMask'))]"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks/subnets",
-      "name": "[concat(variables('virtualNetworkName'), '/', variables('virtualNetworkSubnetDmzPrefix'), 1)]",
-      "location": "[parameters('vnetLocation')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'),'/subnets/',variables('virtualNetworkSubnetPrefix'), add(variables('virtualNetworkSubnetCount'),-1))]"
-      ],
-      "properties": {
-        "addressPrefix": "[concat(variables('virtualNetworkPrefix'), variables('virtualNetworkSubnetDmzOffset'),'.',mul(1,add(variables('virtualNetworkSubnetDmzOctet'),variables('virtualNetworkSubnetDmzMaskJump'))),'/',variables('virtualNetworkSubnetDmzMask'))]"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks/subnets",
-      "name": "[concat(variables('virtualNetworkName'), '/', variables('virtualNetworkSubnetDmzPrefix'), copyindex(2))]",
-      "location": "[parameters('vnetLocation')]",
-      "copy": {
-        "name": "subnetLoop",
-        "count": "[add(variables('virtualNetworkSubnetDmzCount'),-2)]"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'),'/subnets/',variables('virtualNetworkSubnetPrefix'), add(variables('virtualNetworkSubnetCount'),-1))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'),'/subnets/',variables('virtualNetworkSubnetDmzPrefix'), copyindex(1))]"
-      ],
-      "properties": {
-        "addressPrefix": "[concat(variables('virtualNetworkPrefix'), variables('virtualNetworkSubnetDmzOffset'),'.',mul(copyindex(2),add(variables('virtualNetworkSubnetDmzOctet'),variables('virtualNetworkSubnetDmzMaskJump'))),'/',variables('virtualNetworkSubnetDmzMask'))]"
+        }
       }
     }
-  ],
-  "outputs": {
-    "vnetName": {
-      "type": "string",
-      "value": "[variables('virtualNetworkName')]"
-    }
-  }
+  ]
 }

@@ -108,7 +108,7 @@
         },
         "parameters": {
           "unique": {
-            "value": "[parameters('prefix')]"
+            "value": "[concat(parameters('prefix'), 'func')]"
           },
           "storageAccountType": {
             "value": "Standard_LRS"

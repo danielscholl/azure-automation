@@ -1,5 +1,4 @@
-#Requires -Version 3.0
-#Requires -Module AzureRM.Resources
+
 
 Param(
   [string] $filter,
