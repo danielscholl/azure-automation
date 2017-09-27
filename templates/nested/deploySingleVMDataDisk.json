@@ -10,13 +10,6 @@
       "defaultValue": "vm",
       "minLength": 1
     },
-    "vmSuffix": {
-      "type": "string",
-      "metadata": {
-        "description": "The suffix that will be used for the vm name"
-      },
-      "defaultValue": "0"
-    },
     "vmSize": {
       "type": "string",
       "metadata": {
@@ -96,8 +89,7 @@
     }
   },
   "variables": {
-    "vmFullName": "[concat(parameters('vmName'), parameters('vmSuffix'))]",
-    "nicName": "[concat(variables('vmFullName'), '-nic')]",
+    "nicName": "[concat(parameters('vmName'), '-nic')]",
     "vnetID": "[resourceId(parameters('vnetGroup'), 'Microsoft.Network/virtualNetworks', parameters('vnet'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/', parameters('subnet'))]",
     "wadlogs": "<WadCfg> <DiagnosticMonitorConfiguration overallQuotaInMB=\"4096\" xmlns=\"http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration\"> <DiagnosticInfrastructureLogs scheduledTransferLogLevelFilter=\"Error\"/> <WindowsEventLog scheduledTransferPeriod=\"PT1M\" > <DataSource name=\"Application!*[System[(Level = 1 or Level = 2)]]\" /> <DataSource name=\"Security!*[System[(Level = 1 or Level = 2)]]\" /> <DataSource name=\"System!*[System[(Level = 1 or Level = 2)]]\" /></WindowsEventLog>",
@@ -131,7 +123,7 @@
     {
       "comments": "## Virtual Machine ##",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmFullName')]",
+      "name": "[parameters('vmName')]",
       "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "dependsOn": [
@@ -142,7 +134,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('vmFullName')]",
+          "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -161,7 +153,7 @@
           },
           "dataDisks": [
             {
-              "name": "[concat(variables('vmFullName'), '-d1')]",
+              "name": "[concat(parameters('vmName'), '-d1')]",
               "diskSizeGB": 32,
               "lun": 0,
               "createOption": "Empty",
@@ -174,7 +166,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmFullName'), '-nic'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'), '-nic'))]"
             }
           ]
         },
@@ -189,11 +181,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmFullName'), '/BGInfo')]",
+      "name": "[concat(parameters('vmName'), '/BGInfo')]",
       "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmFullName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -206,11 +198,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmFullName'), '/DiagExtension')]",
+      "name": "[concat(parameters('vmName'), '/DiagExtension')]",
       "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmFullName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
       "tags": {
         "displayName": "AzureDiagnostics"

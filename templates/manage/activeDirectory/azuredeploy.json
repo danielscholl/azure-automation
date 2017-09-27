@@ -27,9 +27,9 @@
     "vmSuffix": {
       "type": "string",
       "metadata": {
-        "description": "The suffix that will be used for the vm name"
+        "description": "Suffix Name for the Domain Controller VM."
       },
-      "defaultValue": "01"
+      "defaultValue": "0"
     },
     "vnet": {
       "type": "string",
