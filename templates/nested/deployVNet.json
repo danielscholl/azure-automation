@@ -166,20 +166,6 @@
       "properties": {
         "securityRules": [
           {
-            "name": "ssh_rule",
-            "properties": {
-              "description": "Allow SSH",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "22",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 110,
-              "direction": "Inbound"
-            }
-          },
-          {
             "name": "rdp_rule",
             "properties": {
               "description": "Allow RDP",
@@ -190,48 +176,6 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 120,
-              "direction": "Inbound"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "comments": "## Network Security Group ##",
-      "name": "[variables('nsg5Name')]",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "Network Security Group - Remote Access"
-      },
-      "properties": {
-        "securityRules": [
-          {
-            "name": "default-allow-ssh",
-            "properties": {
-              "description": "Allow SSH",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "22",
-              "sourceAddressPrefix": "[parameters('remoteAccessACL')]",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 1000,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "default-allow-rdp",
-            "properties": {
-              "description": "Allow RDP",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "3389",
-              "sourceAddressPrefix": "[parameters('remoteAccessACL')]",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 1010,
               "direction": "Inbound"
             }
           }
