@@ -9,5 +9,5 @@ az group create --location southcentralus --name ccit-manage
 2. __Deploy Template to Resource Group__
 
 ```bash
-az group deployment create --template-file azuredeploy.json --parameters params.json --resource-group ccit-manage
+az group deployment create --template-file activeDirectory.json --parameters params.json --resource-group ccit-manage
 ```

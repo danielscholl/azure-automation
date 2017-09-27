@@ -1,0 +1,70 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_templateUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of Nested Templates"
+      }
+    },
+    "keyVault": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Key Vault that holds Credential Information"
+      }
+    },
+    "keyVaultGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing KeyVault Resource Group"
+      }
+    },
+    "omsId": {
+      "type": "string",
+      "metadata": {
+        "description": "OMS Workspace ID"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the Domain Controller VM."
+      }
+    }
+  },
+  "variables": {
+    "KeyVaultId": "[resourceId(parameters('keyVaultGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVault'))]"
+  },
+  "resources": [
+    {
+      "name": "TemplateOMSMonitor",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_templateUrl'), 'deployOMSExtension.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "omsId": {
+            "value": "[parameters('omsId')]"
+          },
+          "omsKey": {
+            "reference": {
+              "keyVault": {
+                "id": "[variables('KeyVaultId')]"
+              },
+              "secretName": "omsKey"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

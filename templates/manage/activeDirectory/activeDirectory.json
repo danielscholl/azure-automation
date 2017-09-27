@@ -103,7 +103,7 @@
   },
   "variables": {
     "KeyVaultId": "[resourceId(parameters('keyVaultGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVault'))]",
-    "vmFullName": "[concat(parameters('prefix'), '-', parameters('vmName'), '-', parameters('vmSuffix'))]",
+    "vmFullName": "[concat(parameters('prefix'), '-', parameters('vmName'), parameters('vmSuffix'))]",
     "DomainController": "[concat(parameters('dscNodeConfiguration'), '.', parameters('domainType'))]"
   },
   "resources": [
