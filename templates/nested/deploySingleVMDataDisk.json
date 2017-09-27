@@ -86,6 +86,7 @@
   },
   "variables": {
     "nicName": "[concat(parameters('vmName'), '-nic')]",
+    "vmFullName": "[concat(parameters('vmName'), parameters('vmSuffix'))]",
     "vnetID": "[resourceId(parameters('vnetGroup'), 'Microsoft.Network/virtualNetworks', parameters('vnet'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/', parameters('subnet'))]",
     "storageAccountType": "Standard_LRS",
@@ -120,7 +121,7 @@
     {
       "comments": "## Virtual Machine ##",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('vmName'), parameters('vmSuffix'))]",
+      "name": "[variables('vmFullName')]",
       "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "dependsOn": [
@@ -131,7 +132,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('vmName'), copyIndex())]",
+          "computerName": "[variables('vmFullName')]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -163,7 +164,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'), copyindex(), '-nic'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmFullName'), '-nic'))]"
             }
           ]
         },
@@ -178,11 +179,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'), parameters('vmSuffix'), '/BGInfo')]",
+      "name": "[concat(variables('vmFullName'), '/BGInfo')]",
       "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), parameters('vmSuffix'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmFullName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -195,11 +196,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'), parameters('vmSuffix'), '/DiagExtension')]",
+      "name": "[concat(variables('vmFullName'), '/DiagExtension')]",
       "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), parameters('vmSuffix'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmFullName'))]"
       ],
       "tags": {
         "displayName": "AzureDiagnostics"
