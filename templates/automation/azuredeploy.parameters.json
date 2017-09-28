@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      "value": "my"
+    },
+    "omsWorkspaceRegion": {
+      "value": "East US"
+    },
+    "automationRegion": {
+      "value": "southcentralus"
+    },
+    "domainName": {
+      "value": "my.local"
+    },
+    "_functionRepoURL": {
+      "value": "https://github.com/danielscholl/azure-functions.git"
+    },
+    "_templateRepoURL": {
+      "value": "https://raw.githubusercontent.com/danielscholl/azure-automation/master/templates/nested/"
+    },
+    "_assetLocation": {
+      "value": "https://raw.githubusercontent.com/danielscholl/azure-automation/master/runbooks/"
+    }
+  }
+}

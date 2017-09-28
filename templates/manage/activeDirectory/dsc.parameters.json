@@ -1,0 +1,18 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_templateUrl": {
+      "value": "https://raw.githubusercontent.com/danielscholl/azure-automation/master/templates/nested/"
+    },
+    "domainType": {
+      "value": "FirstDC"
+    },
+    "dscPullServerKey": {
+      "value": "<your_dsc_pull_server_key>"
+    },
+    "dscPullServerUrl": {
+      "value": "<your_dsc_pull_server_url>"
+    }
+  }
+}

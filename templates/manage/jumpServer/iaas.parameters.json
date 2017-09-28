@@ -1,0 +1,30 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "prefix": {
+      "value": "my"
+    },
+    "_templateUrl": {
+      "value": "https://raw.githubusercontent.com/danielscholl/azure-automation/master/templates/nested/"
+    },
+    "vnetGroup": {
+      "value": "<virtual_network_group>"
+    },
+    "vnet": {
+      "value": "<virtual_network_name>"
+    },
+    "subnet": {
+      "value": "<subnet_name>"
+    },
+    "keyVaultGroup": {
+      "value": "<key_vault_group>"
+    },
+    "keyVault": {
+      "value": "<key_vault_name>"
+    },
+    "diagStorage": {
+      "value": "<diagnostics_storage_account>"
+    }
+  }
+}
